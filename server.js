@@ -28,7 +28,7 @@ var clients = [];
 webSocketServer.on("connection", function (ws) {
   clients.push(ws);
   console.log("новое соединение " + ws);
-  console.log(clients)
+  //console.log(clients)
   if (clients.length === 2 && gameStatus === "waiting") {
     gameStatus = "started";
     clients[0].send()
