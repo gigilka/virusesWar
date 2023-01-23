@@ -3,13 +3,10 @@ var socket = new WebSocket("ws://localhost:8443");
 var turnscount = 0;
 var whichturn = 1;
 
-function click(id) {
-  socket.send(id);
-  document.getElementById(
-    id
-  ).innerHTML = `<div class='cell' id='${id}' onclick='click()'> 
-    <img id='$8' src='/sprites/1st.png' style='width: 100%; max-height:100% draggable="false"'>  
-</div>\n`;
+function myFunction(x) {
+  var idsar=x.id.split('-')
+
+  console.log("x: " + x.cellIndex+" y: "+idsar[1]);
 }
 
 socket.onopen = function () {
