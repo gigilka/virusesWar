@@ -3,16 +3,17 @@ var socket = new WebSocket("ws://localhost:8443");
 var turnscount = 0;
 var whichturn = 1;
 
-function iscorrect(x) {
+function iscorrect(x,turnscount,whichturn) {
   var xc = x.cellIndex;
   var idsar = x.id.split("-");
   var yc = idsar[1];
+  
 }
 
 function myFunction(x) {
   var idsar = x.id.split("-");
   x.innerHTML =
-    "<img src='./sprites/redall.png' height=35px width=35px alt='x'/>";
+    "<img src='./sprites/cross.png' height=35px width=35px alt='x'/>";
   console.log("x: " + x.cellIndex + " y: " + idsar[1]);
 }
 

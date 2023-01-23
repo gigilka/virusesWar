@@ -2,9 +2,26 @@
 <html>
   <head>
     <style>
-      .starbtn {
-        position: relative;
+      body {
+        background-image: url("/sprites/back.png");
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+      .startbtn {
+        margin: 10% 50%;
+        height: 30%;
+        width: 50%;
+        text-align: center;
+        font-weight: bold;
+        font-family: "JetBrains Mono", monospace;
+        padding: 0.5vh;
+        overflow: hidden;
+      }
+      .entry {
+        position: center;
         left: 50%;
+        top: 50%;
         transform: translate(-50%, 0);
       }
     </style>
@@ -15,7 +32,7 @@
       <button id="button1" class="startbtn" onclick="redirect()">
         Найти игру
       </button>
-      <button id="button2" class="arcbtn" onclick="redirect1()">
+      <button id="button2" class="startbtn" onclick="redirect1()">
         Посмотреть результаты
       </button>
     </div>
