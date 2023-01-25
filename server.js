@@ -24,6 +24,9 @@ const client = new Client({
 client.connect();
 console.log("connection to db succesfull");
 client.end();
+
+whichTurn = "bl";
+
 //1-blue 2-blueall 3-red 4-redall 0-empty
 var tablee = [];
 for (let i = 0; i < 10; i++) {
@@ -44,18 +47,20 @@ function IsReachable(x, y, tablee, role) {
   console.log(neighbors);
   return true;
 }
-
-function IsCorrect(x, y, tablee, role) {
+//1-blue 2-blueall 3-red 4-redall 0-empty
+function IsCorrect(x, y, tablee, role, result) {
   flag = true;
   point = tablee[x - 1][y - 1];
   switch (point) {
     case 0:
+      result.poi = role;
       return true;
     case 1:
       if (role == "bl") {
         return false;
       } else {
         if (IsReachable(x, y, tablee, role)) {
+          result.poi = "redall";
           return true;
         } else {
           return false;
@@ -64,10 +69,11 @@ function IsCorrect(x, y, tablee, role) {
     case 2:
       return false;
     case 3:
-      if (role == "red") {
+      if (role == "re") {
         return false;
       } else {
         if (IsReachable(x - 1, y - 1, tablee, role)) {
+          result.poi = "blueall";
           return true;
         } else {
           return false;
@@ -77,6 +83,7 @@ function IsCorrect(x, y, tablee, role) {
       return false;
   }
 }
+
 var clients = [];
 webSocketServer.on("connection", function (ws) {
   clients.push(ws);
@@ -89,18 +96,59 @@ webSocketServer.on("connection", function (ws) {
   }
   ws.on("message", function (message) {
     console.log("получено сообщение " + message);
+
     if (clients[0] == ws) role = "bl";
     else {
       role = "re";
+    }
+
+    if (whichTurn != role) {
+      switch (role) {
+        case "bl":
+          clients[0].send("notyourturn-error");
+        case "re":
+          clients[1].send("notyourturn-error");
+      }
     }
     str = message.toString();
     idar = str.split("-");
     idx = idar[0];
     idy = idar[1];
-    flag = IsCorrect(idx, idy, tablee, role);
+    let result = { poi: "empty" };
+
+    flag = IsCorrect(idx, idy, tablee, role, result);
+
     if (flag) {
-      clients[0].send("correct-" + idx + "-" + idy + "-" + role);
-      clients[1].send("correct-" + idx + "-" + idy + "-" + role);
+      switch (result.poi) {
+        case "bl":
+          tablee[idx - 1][idy - 1] = 1;
+          break;
+        case "re":
+          tablee[idx - 1][idy - 1] = 3;
+          break;
+        case "blueall":
+          tablee[idx - 1][idy - 1] = 2;
+          break;
+        case "redall":
+          tablee[idx - 1][idy - 1] = 4;
+          break;
+      }
+
+      moves -= 1;
+      if (moves == 0) {
+        whichTurn = "re";
+        moves = 3;
+      }
+
+      clients[0].send(
+        "correct-" + idx + "-" + idy + "-" + tablee[idx - 1][idy - 1]
+      );
+      clients[1].send(
+        "correct-" + idx + "-" + idy + "-" + tablee[idx - 1][idy - 1]
+      );
+    } else {
+      clients[0].send("notcorrect-" + idx + "-" + idy);
+      clients[1].send("notcorrect-" + idx + "-" + idy);
     }
     console.log(idx + " " + idy + " " + role);
   });
