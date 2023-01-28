@@ -1,18 +1,14 @@
 function init() {
-  var oReq = new XMLHttpRequest();
+  var req = new XMLHttpRequest();
 
-  //Настроили запрос
-  oReq.open("GET", "/history");
-  //отсылаем запрос
-  oReq.send();
-  //Этот код сработает после того, как мы получим ответ сервера
-  oReq.onload = function () {
-    if (oReq.status != 200) {
-      // анализируем HTTP-статус ответа, если статус не 200, то произошла ошибка
-      alert(`Ошибка ${oReq.status}: ${oReq.statusText}`);
+  req.open("GET", "/results");
+  req.send();
+  req.onload = function () {
+    if (req.status != 200) {
+      alert(`Ошибка ${req.status}: ${req.statusText}`);
     } else {
-      let response = JSON.parse(oReq.response);
-      let table = document.getElementById("table_data");
+      let response = JSON.parse(req.response);
+      let table = document.getElementById("resultstable");
       table.innerHTML = "";
       let header = table.createTHead();
       let headerRow = header.insertRow();
@@ -20,7 +16,7 @@ function init() {
       headerRow.insertCell().innerHTML = "id2";
       headerRow.insertCell().innerHTML = "Результат";
       let body = table.createTBody();
-      for (row of response) {
+      for (row of response.rows) {
         let newRow = body.insertRow();
         for (let key in row) {
           let cell = newRow.insertCell();

@@ -4,6 +4,12 @@ const WebSocket = require("ws");
 
 const app = express();
 app.use(express.static(__dirname));
+const bodyParser = require("body-parser");
+const urlencodedParser = bodyParser.urlencoded({
+  extended: false,
+});
+
+app.use(bodyParser.json());
 const server = http.createServer(app);
 
 const webSocketServer = new WebSocket.Server({ server });
@@ -13,6 +19,7 @@ const uuid = require("uuid");
 gameStatus = "waiting";
 moves = 3;
 firstTurn = true;
+
 const client = new Client({
   user: "test",
   host: "localhost",
@@ -55,8 +62,6 @@ function findNeighbors(x, y) {
 }
 function IsReachable(x, y, tablee, role) {
   neighbors = findNeighbors(x, y);
-  console.log(tablee);
-  console.log(neighbors);
 
   if (role == "bl") {
     intRole = 1;
@@ -71,7 +76,6 @@ function IsReachable(x, y, tablee, role) {
       tablee[Number(neighbors[k].x)][Number(neighbors[k].y)] == intRole ||
       tablee[Number(neighbors[k].x)][Number(neighbors[k].y)] == intChain
     ) {
-      console.log(k);
       return true;
     }
   }
@@ -224,7 +228,6 @@ webSocketServer.on("connection", function (ws) {
     else {
       role = "re";
     }
-    console.log(gameStatus);
     str = message.toString();
     idar = str.split("-");
     idx = idar[0];
@@ -242,13 +245,11 @@ webSocketServer.on("connection", function (ws) {
       }
       flag = false;
     }
-    console.log(moves, whichTurn);
 
     if (gameStatus == "firstTurn") {
       if (moves == 3) {
         switch (role) {
           case "bl":
-            console.log("cheese");
             if (Number(idx) != 1 || Number(idy) != 1) {
               flag = false;
             } else {
@@ -257,7 +258,6 @@ webSocketServer.on("connection", function (ws) {
             }
             break;
           case "re":
-            console.log("asss");
             if (Number(idx) != 10 || Number(idy) != 10) {
               flag = false;
             } else {
@@ -271,7 +271,7 @@ webSocketServer.on("connection", function (ws) {
         gameStatus = "cont";
       }
     }
-    console.log("flag - " + flag);
+
     if (flag) {
       switch (result.poi) {
         case "bl":
@@ -321,14 +321,14 @@ webSocketServer.on("connection", function (ws) {
         gameRes = "";
         if (winner.win == "red") {
           gameRes = "0-1";
-        } else if (winner.win == "blue"){
+        } else if (winner.win == "blue") {
           gameRes = "1-0";
         }
         idf = ids[0];
-        ids = ids[1];
+        idse = ids[1];
         client.query(
           `INSERT INTO results (id1, id2, matchres) VALUES ($1, $2, $3);`,
-          [idf, ids, gameRes],
+          [idf, idse, gameRes],
           (err, res) => {
             if (err) {
               console.error(err);
@@ -343,27 +343,44 @@ webSocketServer.on("connection", function (ws) {
   ws.on("close", function () {
     console.log("соединение закрыто " + ws);
     ids.clear;
-    clients.clear;
+    while (clients.length > 0) {
+      clients.pop();
+    }
+    moves = 3;
+    whichturn = "blue";
     gameStatus = "waiting";
   });
 });
 
 server.listen(8443, () => console.log("Server started"));
 
-app.get("/history", function(req, res) {
-  client.query("SELECT * FROM results;", (err, rows)=>{
-      if(err) {
-          console.log(err)
-          return;
-      }
-      res.end(JSON.stringify(rows))
-  })
+app.get("/results", function (req, res) {
+  console.log("qwewqeqw");
+  const query = ` 
+  SELECT * 
+  FROM results     
+  `;
+  client1 = new Client({
+    user: "test",
+    host: "localhost",
+    database: "VirusesWarDB",
+    password: "1234",
+    port: 5432,
+  });
 
-})
+  client1.connect();
+  client1.query(query, function (err, rows) {
+    if (err) {
+      console.log(err);
+      return;
+    }
 
-app.get("/", function(req, res) {
+    res.end(JSON.stringify(rows));
+  });
+});
+
+app.get("/", function (req, res) {
   res.redirect(301, "index.html");
-})
+});
 
-
-app.listen(3000); 
+app.listen(3000);
