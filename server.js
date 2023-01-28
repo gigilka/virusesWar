@@ -132,14 +132,14 @@ function IsReachable(x, y, tablee, role) {
   }
 
   for (k = 0; k < neighbors.length; k++) {
-    if (tablee[neighbors[k].x][neighbors[k].y] == intRole) {
+    if (tablee[Number(neighbors[k].x)][Number(neighbors[k].y)] == intRole) {
       console.log(k);
       return true;
     }
   }
 
   for (k = 0; k < neighbors.length; k++) {
-    if (tablee[neighbors[k].x][neighbors[k].y] == intChain) {
+    if (tablee[Number(neighbors[k].x)][Number(neighbors[k].y)] == intChain) {
       ends.push({ x: neighbors[k].x, y: neighbors[k].y });
       return true;
     }
@@ -195,8 +195,13 @@ function IsCorrect(x, y, tablee, role, result) {
   point = tablee[x - 1][y - 1];
   switch (point) {
     case 0:
-      result.poi = role;
-      return true;
+      if (IsReachable(x, y, tablee, role)) {
+        result.poi = role;
+
+        return true;
+      } else {
+        return false;
+      }
     case 1:
       if (role == "bl") {
         return false;
@@ -261,18 +266,27 @@ webSocketServer.on("connection", function (ws) {
       }
       flag = false;
     }
-    console.log(moves, whichTurn)
+    console.log(moves, whichTurn);
+
     if (gameStatus == "firstTurn") {
       if (moves == 3) {
-        switch (whichTurn) {
+        switch (role) {
           case "bl":
-            if (idx != 1 && idy != 1) {
+            console.log("cheese");
+            if (Number(idx) != 1 || Number(idy) != 1) {
               flag = false;
+            } else {
+              flag = true;
+              result.poi = role;
             }
             break;
           case "re":
-            if (idx != 10 && idy != 10) {
+            console.log("asss");
+            if (Number(idx) != 10 || Number(idy) != 10) {
               flag = false;
+            } else {
+              flag = true;
+              result.poi = role;
             }
             break;
         }
@@ -281,6 +295,7 @@ webSocketServer.on("connection", function (ws) {
         gameStatus = "cont";
       }
     }
+    console.log("flag - " + flag);
     if (flag) {
       switch (result.poi) {
         case "bl":
