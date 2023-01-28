@@ -60,8 +60,10 @@ socket.onmessage = function (message) {
           "<img src='./sprites/redall.png' height=35px width=35px alt='x'/>";
         break;
     }
-  } else if ((splited[0] = "notcorrect")) {
+  } else if ((splited[0] == "notcorrect")) {
     console.log("Невозможный ход");
+  } else if ((splited[0] == "winner")) {
+    alert("Игрок " + splited[1] + " победил");
   }
 };
 

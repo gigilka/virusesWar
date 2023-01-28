@@ -9,7 +9,7 @@ const server = http.createServer(app);
 const webSocketServer = new WebSocket.Server({ server });
 
 const { Client } = require("pg");
-const { table } = require("console");
+const uuid = require("uuid");
 gameStatus = "waiting";
 moves = 3;
 firstTurn = true;
@@ -21,16 +21,23 @@ const client = new Client({
   port: 5432,
 });
 
-client.connect();
-console.log("connection to db succesfull");
-client.end();
+//client.connect();
+//console.log("connection to db succesfull");
+//client.end();
 
 whichTurn = "bl";
 
-//1-blue 2-blueall 3-red 4-redall 0-empty
+//1-blue 2-blueall 3-red 4-redall 0-empty 5-frame
 var tablee = [];
-for (let i = 0; i < 10; i++) {
-  tablee[i] = new Array(10).fill(0);
+for (let i = 0; i < 12; i++) {
+  tablee[i] = new Array(12).fill(0);
+}
+
+for (k = 0; k < 12; k++) {
+  tablee[0][k] = 5;
+  tablee[11][k] = 5;
+  tablee[k][0] = 5;
+  tablee[k][11] = 5;
 }
 
 function findNeighbors(x, y) {
@@ -46,83 +53,11 @@ function findNeighbors(x, y) {
   ];
   return neighbors;
 }
-
-var conTable = [];
-for (let i = 0; i < 10; i++) {
-  conTable[i] = new Array(10).fill(0);
-}
-
-function dfs(v) {
-  this.dmarked[v] = true;
-  console.log(v);
-  var temp = this.verticesRe[v];
-  for (var i = 0; i < temp.length; ++i) {
-    if (!this.dmarked[temp[i]]) {
-      this.dfs(temp[i]);
-    }
-  }
-}
-
-function bfs(v, base) {
-  var queue = [];
-  queue.push(v);
-  this.bmarked[v] = true;
-  while (queue.length) {
-    var shift = queue.shift(); // Удаляем первый элемент очереди
-    console.log(shift);
-    if (shift == base) {
-      return true;
-    }
-    var temp = this.verticesRe[shift];
-    for (var i = 0; i < temp.length; ++i) {
-      if (!this.bmarked[temp[i]]) {
-        this.bmarked[temp[i]] = true;
-        queue.push(temp[i]);
-      }
-    }
-  }
-  return false;
-}
-
-function Graph(v) {
-  this.vertices = v; // количество вершин
-  this.edges = 0; // количество ребер
-  this.verticesRe = []; // Двумерный массив для хранения вершин, смежных с текущей вершиной
-  this.bmarked = []; // отмеченный массив
-  this.dmarked = []; // отмеченный массив
-  for (var i = 0; i < v; ++i) {
-    this.verticesRe[i] = [];
-    this.bmarked[i] = false;
-    this.dmarked[i] = false;
-  }
-  this.addEdge = addEdge;
-}
-
-this.dfs = dfs; // поиск в глубину
-this.bfs = bfs; // Поиск в ширину
-
-function addEdge(v, w) {
-  this.verticesRe[v].push(w);
-  this.verticesRe[w].push(v);
-  this.edges++;
-}
-
 function IsReachable(x, y, tablee, role) {
-  neighbors = [
-    { x: Number(x), y: Number(y) - 1 },
-    { x: Number(x), y: Number(y) + 1 },
-    { x: Number(x) - 1, y: Number(y) - 1 },
-    { x: Number(x) - 1, y: Number(y) },
-    { x: Number(x) - 1, y: Number(y) + 1 },
-    { x: Number(x) + 1, y: Number(y) - 1 },
-    { x: Number(x) + 1, y: Number(y) },
-    { x: Number(x) + 1, y: Number(y) + 1 },
-  ];
+  neighbors = findNeighbors(x, y);
   console.log(tablee);
   console.log(neighbors);
 
-  ends = [];
-  bases = [];
   if (role == "bl") {
     intRole = 1;
     intChain = 2;
@@ -132,67 +67,104 @@ function IsReachable(x, y, tablee, role) {
   }
 
   for (k = 0; k < neighbors.length; k++) {
-    if (tablee[Number(neighbors[k].x)][Number(neighbors[k].y)] == intRole) {
+    if (
+      tablee[Number(neighbors[k].x)][Number(neighbors[k].y)] == intRole ||
+      tablee[Number(neighbors[k].x)][Number(neighbors[k].y)] == intChain
+    ) {
       console.log(k);
       return true;
     }
   }
+  return false;
+}
 
-  for (k = 0; k < neighbors.length; k++) {
-    if (tablee[Number(neighbors[k].x)][Number(neighbors[k].y)] == intChain) {
-      ends.push({ x: neighbors[k].x, y: neighbors[k].y });
-      return true;
-    }
-    if (ends.length == 0) {
-      return false;
-    }
+function haveAvailable(whichTurn, tablee) {
+  id = 0;
+  potential = [];
+  switch (whichTurn) {
+    case "bl":
+      id = 3;
+      myid = 1;
+      myDead = 2;
+      break;
+    case "re":
+      id = 1;
+      myid = 3;
+      myDead = 4;
+      break;
+  }
 
-    let count = 0;
-
-    for (i = 0; i < 10; i++) {
-      for (j = 0; j < 10; j++) {
-        if (tablee[i][j] == intRole) {
-          base.push({ x: i, y: j });
-          count++;
-        }
-        if (tablee[i][j] == intChain) {
-          count++;
-        }
-      }
-    }
-
-    g = new Graph(count);
-    for (i = 0; i < 10; i++) {
-      for (j = 0; j < 10; j++) {
-        if (tablee[i][j] == intRole || tablee[i][j] == intChain) {
-          nei = findNeighbors(i, j);
-          for (k = 0; k < nei.length; k++) {
-            if (
-              table[nei[k].x][nei[k].y] == intRole ||
-              table[nei[k].x][nei[k].y] == intChain
-            ) {
-              g.addEdge(Number(nei[k].x) * 10 + Number(nei[k].y), i * 10 + j);
-            }
-          }
-        }
+  for (i = 1; i < 11; i++) {
+    for (j = 1; j < 11; j++) {
+      if (tablee[i][j] == 0 || tablee[i][j] == id) {
+        potential.push({ x: Number(i), y: Number(j) });
       }
     }
   }
 
-  for (k = 0; k < ends.length; k++) {
-    for (l = 0; l < bases.length; l++) {
-      if (g.dfs(ends[k], bases[l])) {
+  for (k = 0; k < potential.length; k++) {
+    neighbors = findNeighbors(potential[k].x, potential[k].y);
+
+    for (l = 0; l < neighbors.length; l++) {
+      if (
+        tablee[neighbors[l].x][neighbors[l].y] == myid ||
+        tablee[neighbors[l].x][neighbors[l].y] == myDead
+      ) {
         return true;
       }
     }
   }
-  console.log(neighbors);
+  return false;
+}
+
+function GameFinished(tablee, winner, whichTurn) {
+  countX = 0;
+  countO = 0;
+  for (k = 1; k < 11; k++) {
+    for (l = 1; l < 11; l++) {
+      switch (tablee[k][l]) {
+        case 1:
+          countX++;
+          break;
+        case 3:
+          countO++;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+  if (countX == 0) {
+    winner.win = "red";
+    return true;
+  } else if (countO == 0) {
+    winner.win = "blue";
+    return true;
+  } else {
+    switch (whichTurn) {
+      case "bl":
+        if (haveAvailable(whichTurn, tablee)) {
+          return false;
+        } else {
+          winner.win = "red";
+          return true;
+        }
+
+      case "re":
+        if (haveAvailable(whichTurn, tablee)) {
+          return false;
+        } else {
+          winner.win = "blue";
+          return true;
+        }
+    }
+  }
   return false;
 }
 //1-blue 2-blueall 3-red 4-redall 0-empty
 function IsCorrect(x, y, tablee, role, result) {
   flag = true;
-  point = tablee[x - 1][y - 1];
+  point = tablee[x][y];
   switch (point) {
     case 0:
       if (IsReachable(x, y, tablee, role)) {
@@ -219,7 +191,7 @@ function IsCorrect(x, y, tablee, role, result) {
       if (role == "re") {
         return false;
       } else {
-        if (IsReachable(x - 1, y - 1, tablee, role)) {
+        if (IsReachable(x, y, tablee, role)) {
           result.poi = "blueall";
           return true;
         } else {
@@ -230,9 +202,13 @@ function IsCorrect(x, y, tablee, role, result) {
       return false;
   }
 }
+var ids = [];
 
 var clients = [];
+
 webSocketServer.on("connection", function (ws) {
+  ws.uuid = uuid.v4();
+  ids.push(ws.uuid);
   clients.push(ws);
   console.log("новое соединение " + ws);
   //console.log(clients)
@@ -299,16 +275,16 @@ webSocketServer.on("connection", function (ws) {
     if (flag) {
       switch (result.poi) {
         case "bl":
-          tablee[idx - 1][idy - 1] = 1;
+          tablee[idx][idy] = 1;
           break;
         case "re":
-          tablee[idx - 1][idy - 1] = 3;
+          tablee[idx][idy] = 3;
           break;
         case "blueall":
-          tablee[idx - 1][idy - 1] = 2;
+          tablee[idx][idy] = 2;
           break;
         case "redall":
-          tablee[idx - 1][idy - 1] = 4;
+          tablee[idx][idy] = 4;
           break;
       }
 
@@ -326,22 +302,68 @@ webSocketServer.on("connection", function (ws) {
         }
       }
 
-      clients[0].send(
-        "correct-" + idx + "-" + idy + "-" + tablee[idx - 1][idy - 1]
-      );
-      clients[1].send(
-        "correct-" + idx + "-" + idy + "-" + tablee[idx - 1][idy - 1]
-      );
+      clients[0].send("correct-" + idx + "-" + idy + "-" + tablee[idx][idy]);
+      clients[1].send("correct-" + idx + "-" + idy + "-" + tablee[idx][idy]);
     } else {
       clients[0].send("notcorrect-" + idx + "-" + idy);
       clients[1].send("notcorrect-" + idx + "-" + idy);
     }
     console.log(idx + " " + idy + " " + role);
+
+    let winner = { win: "empty" };
+    if (gameStatus == "cont") {
+      if (GameFinished(tablee, winner, whichTurn)) {
+        clients[0].send("winner-" + winner.win);
+        clients[1].send("winner-" + winner.win);
+        clients[0].close();
+        clients[1].close();
+        client.connect();
+        gameRes = "";
+        if (winner.win == "red") {
+          gameRes = "0-1";
+        } else if (winner.win == "blue"){
+          gameRes = "1-0";
+        }
+        idf = ids[0];
+        ids = ids[1];
+        client.query(
+          `INSERT INTO results (id1, id2, matchres) VALUES ($1, $2, $3);`,
+          [idf, ids, gameRes],
+          (err, res) => {
+            if (err) {
+              console.error(err);
+              return;
+            }
+          }
+        );
+      }
+    }
   });
 
   ws.on("close", function () {
     console.log("соединение закрыто " + ws);
+    ids.clear;
+    clients.clear;
+    gameStatus = "waiting";
   });
 });
 
 server.listen(8443, () => console.log("Server started"));
+
+app.get("/history", function(req, res) {
+  client.query("SELECT * FROM results;", (err, rows)=>{
+      if(err) {
+          console.log(err)
+          return;
+      }
+      res.end(JSON.stringify(rows))
+  })
+
+})
+
+app.get("/", function(req, res) {
+  res.redirect(301, "index.html");
+})
+
+
+app.listen(3000); 
