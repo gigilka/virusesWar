@@ -31,12 +31,10 @@ socket.onmessage = function (message) {
 
   if (splited[0] == "bl" || splited[0] == "re") {
     role = splited[0];
-  }
-  if (splited[0] == "notyourturn") {
-    alert("Ход соперника");
-  }
-  if (splited[0] == "correct") {
-    alert("gg");
+  } else if (splited[0] == "notyourturn") {
+    console.log("Ход соперника");
+  } else if (splited[0] == "correct") {
+    console.log("gg");
     idx = splited[1];
     idy = splited[2];
     role = splited[3];
@@ -62,10 +60,8 @@ socket.onmessage = function (message) {
           "<img src='./sprites/redall.png' height=35px width=35px alt='x'/>";
         break;
     }
-  }
-
-  if (splited[0]="notcorrect"){
-    alert("Невозможный ход");
+  } else if ((splited[0] = "notcorrect")) {
+    console.log("Невозможный ход");
   }
 };
 

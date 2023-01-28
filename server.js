@@ -35,16 +35,21 @@ for (let i = 0; i < 10; i++) {
 
 function findNeighbors(x, y) {
   neighbors = [
-    { x: x, y: y - 1 },
-    { x: x, y: y + 1 },
-    { x: x - 1, y: y - 1 },
-    { x: x - 1, y: y },
-    { x: x - 1, y: y + 1 },
-    { x: x + 1, y: y - 1 },
-    { x: x + 1, y: y },
-    { x: x + 1, y: y + 1 },
+    { x: Number(x), y: Number(y) - 1 },
+    { x: Number(x), y: Number(y) + 1 },
+    { x: Number(x) - 1, y: Number(y) - 1 },
+    { x: Number(x) - 1, y: Number(y) },
+    { x: Number(x) - 1, y: Number(y) + 1 },
+    { x: Number(x) + 1, y: Number(y) - 1 },
+    { x: Number(x) + 1, y: Number(y) },
+    { x: Number(x) + 1, y: Number(y) + 1 },
   ];
   return neighbors;
+}
+
+var conTable = [];
+for (let i = 0; i < 10; i++) {
+  conTable[i] = new Array(10).fill(0);
 }
 
 function dfs(v) {
@@ -58,13 +63,16 @@ function dfs(v) {
   }
 }
 
-function bfs(v) {
+function bfs(v, base) {
   var queue = [];
   queue.push(v);
   this.bmarked[v] = true;
   while (queue.length) {
     var shift = queue.shift(); // Удаляем первый элемент очереди
     console.log(shift);
+    if (shift == base) {
+      return true;
+    }
     var temp = this.verticesRe[shift];
     for (var i = 0; i < temp.length; ++i) {
       if (!this.bmarked[temp[i]]) {
@@ -73,6 +81,7 @@ function bfs(v) {
       }
     }
   }
+  return false;
 }
 
 function Graph(v) {
@@ -100,16 +109,16 @@ function addEdge(v, w) {
 
 function IsReachable(x, y, tablee, role) {
   neighbors = [
-    { x: x, y: y - 1 },
-    { x: x, y: y + 1 },
-    { x: x - 1, y: y - 1 },
-    { x: x - 1, y: y },
-    { x: x - 1, y: y + 1 },
-    { x: x + 1, y: y - 1 },
-    { x: x + 1, y: y },
-    { x: x + 1, y: y + 1 },
+    { x: Number(x), y: Number(y) - 1 },
+    { x: Number(x), y: Number(y) + 1 },
+    { x: Number(x) - 1, y: Number(y) - 1 },
+    { x: Number(x) - 1, y: Number(y) },
+    { x: Number(x) - 1, y: Number(y) + 1 },
+    { x: Number(x) + 1, y: Number(y) - 1 },
+    { x: Number(x) + 1, y: Number(y) },
+    { x: Number(x) + 1, y: Number(y) + 1 },
   ];
-
+  console.log(tablee);
   console.log(neighbors);
 
   ends = [];
@@ -122,15 +131,17 @@ function IsReachable(x, y, tablee, role) {
     intChain = 4;
   }
 
-  for (i = 0; i < neighbors.length; i++) {
+  for (k = 0; k < neighbors.length; k++) {
     if (tablee[neighbors[k].x][neighbors[k].y] == intRole) {
+      console.log(k);
       return true;
     }
   }
 
-  for (i = 0; i < neighbors.length; i++) {
+  for (k = 0; k < neighbors.length; k++) {
     if (tablee[neighbors[k].x][neighbors[k].y] == intChain) {
       ends.push({ x: neighbors[k].x, y: neighbors[k].y });
+      return true;
     }
     if (ends.length == 0) {
       return false;
@@ -141,7 +152,7 @@ function IsReachable(x, y, tablee, role) {
     for (i = 0; i < 10; i++) {
       for (j = 0; j < 10; j++) {
         if (tablee[i][j] == intRole) {
-          ends.push({ x: i, y: j });
+          base.push({ x: i, y: j });
           count++;
         }
         if (tablee[i][j] == intChain) {
@@ -156,14 +167,27 @@ function IsReachable(x, y, tablee, role) {
         if (tablee[i][j] == intRole || tablee[i][j] == intChain) {
           nei = findNeighbors(i, j);
           for (k = 0; k < nei.length; k++) {
-            
+            if (
+              table[nei[k].x][nei[k].y] == intRole ||
+              table[nei[k].x][nei[k].y] == intChain
+            ) {
+              g.addEdge(Number(nei[k].x) * 10 + Number(nei[k].y), i * 10 + j);
+            }
           }
         }
       }
     }
   }
+
+  for (k = 0; k < ends.length; k++) {
+    for (l = 0; l < bases.length; l++) {
+      if (g.dfs(ends[k], bases[l])) {
+        return true;
+      }
+    }
+  }
   console.log(neighbors);
-  return true;
+  return false;
 }
 //1-blue 2-blueall 3-red 4-redall 0-empty
 function IsCorrect(x, y, tablee, role, result) {
@@ -208,7 +232,7 @@ webSocketServer.on("connection", function (ws) {
   console.log("новое соединение " + ws);
   //console.log(clients)
   if (clients.length == 2 && gameStatus == "waiting") {
-    gameStatus = "started";
+    gameStatus = "firstTurn";
     clients[0].send("bl-f");
     clients[1].send("re-f");
   }
@@ -219,15 +243,7 @@ webSocketServer.on("connection", function (ws) {
     else {
       role = "re";
     }
-
-    if (whichTurn != role) {
-      switch (role) {
-        case "bl":
-          clients[0].send("notyourturn-error");
-        case "re":
-          clients[1].send("notyourturn-error");
-      }
-    }
+    console.log(gameStatus);
     str = message.toString();
     idar = str.split("-");
     idx = idar[0];
@@ -236,6 +252,35 @@ webSocketServer.on("connection", function (ws) {
 
     flag = IsCorrect(idx, idy, tablee, role, result);
 
+    if (whichTurn != role) {
+      switch (role) {
+        case "bl":
+          clients[0].send("notyourturn-error");
+        case "re":
+          clients[1].send("notyourturn-error");
+      }
+      flag = false;
+    }
+    console.log(moves, whichTurn)
+    if (gameStatus == "firstTurn") {
+      if (moves == 3) {
+        switch (whichTurn) {
+          case "bl":
+            if (idx != 1 && idy != 1) {
+              flag = false;
+            }
+            break;
+          case "re":
+            if (idx != 10 && idy != 10) {
+              flag = false;
+            }
+            break;
+        }
+      }
+      if (moves == 1 && whichTurn == "re") {
+        gameStatus = "cont";
+      }
+    }
     if (flag) {
       switch (result.poi) {
         case "bl":
@@ -254,8 +299,16 @@ webSocketServer.on("connection", function (ws) {
 
       moves -= 1;
       if (moves == 0) {
-        whichTurn = "re";
-        moves = 3;
+        switch (whichTurn) {
+          case "re":
+            whichTurn = "bl";
+            moves = 3;
+            break;
+          case "bl":
+            whichTurn = "re";
+            moves = 3;
+            break;
+        }
       }
 
       clients[0].send(
