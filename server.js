@@ -246,7 +246,7 @@ webSocketServer.on("connection", function (ws) {
       flag = false;
     }
 
-    if (gameStatus == "firstTurn") {
+    if (gameStatus == "firstTurn" && whichTurn == role) {
       if (moves == 3) {
         switch (role) {
           case "bl":
@@ -347,6 +347,9 @@ webSocketServer.on("connection", function (ws) {
       clients.pop();
     }
     moves = 3;
+    for (let i = 1; i < 11; i++) {
+      for (let j = 1; j < 11; j++) tablee[i][j] = 0;
+    }
     whichturn = "blue";
     gameStatus = "waiting";
   });
