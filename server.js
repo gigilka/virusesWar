@@ -20,13 +20,6 @@ gameStatus = "waiting";
 moves = 3;
 firstTurn = true;
 
-const client = new Client({
-  user: "test",
-  host: "localhost",
-  database: "VirusesWarDB",
-  password: "1234",
-  port: 5432,
-});
 
 //client.connect();
 //console.log("connection to db succesfull");
@@ -317,6 +310,13 @@ webSocketServer.on("connection", function (ws) {
         clients[1].send("winner-" + winner.win);
         clients[0].close();
         clients[1].close();
+        client = new Client({
+          user: "test",
+          host: "localhost",
+          database: "VirusesWarDB",
+          password: "1234",
+          port: 5432,
+        });
         client.connect();
         gameRes = "";
         if (winner.win == "red") {
